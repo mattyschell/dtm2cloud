@@ -1,0 +1,1 @@
+select * from TAX_BLOCK;
