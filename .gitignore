@@ -1,3 +1,9 @@
-# FME
+# FME stuff?
 # placeholder...
 
+# ESRI connections and data files 
+*.sde
+*.shp
+*.dbf
+*.shx
+*.dbf
