@@ -7,6 +7,14 @@
 -- must add the extension to this database
 -- this will error in specatucularly confusing ways
 -- if the environment is not configured as expected
+SELECT
+   CASE WHEN count(*) = 1 
+   THEN 'creating extension postgis ' || (select default_version from pg_available_extensions where name = 'postgis') 
+                                      || ' if not installed'
+   ELSE 'MAYDAY: No postgis extension available in pg_available extensions'
+   END AS postgis_clue
+FROM pg_available_extensions
+where name = 'postgis';
 create extension if not exists postgis;
 -- as currently defined in batch Oracle ETL
 -- Source SDE TAX_BLOCK_POLYGON --> target Oracle DTM TAX_BLOCK
