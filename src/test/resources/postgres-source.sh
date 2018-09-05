@@ -11,4 +11,4 @@ PGPASSWORD=$superpw psql -U postgres -d dtmtest -f src/test/resources/data-postg
 # tests tests etc yeah
 # caller then probably does:
 # psql -U postgres -d postgres -f teardowndb-postgres.sql
-printf "exiting from postgres-target.sh"
+printf "exiting from postgres-source.sh"

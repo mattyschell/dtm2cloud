@@ -12,7 +12,7 @@ create extension if not exists postgis;
 -- Source SDE TAX_BLOCK_POLYGON --> target Oracle SDO TAX_BLOCK (not tiled)
 --                              --> target Oracle SDO TAX_BLOCK_POINT
 -- Different names because they lived in the same Oracle schema DOF_TAXMAP
-CREATE TABLE tax_block_polygon (
+CREATE TABLE tax_block_polygon_scratch (
 	objectid NUMERIC NOT NULL, 
 	boro VARCHAR(1) NOT NULL, 
 	block NUMERIC(10,0) NOT NULL, 
@@ -26,13 +26,13 @@ CREATE TABLE tax_block_polygon (
 	volume_number NUMERIC(5,0) NOT NULL, 
 	globalid VARCHAR(38) NOT NULL, 
     shape GEOMETRY(polygon, 2263)); 
-CREATE INDEX tax_block_polygonshape on tax_block_polygon using GIST(shape);
+CREATE INDEX tax_block_polygon_scratchshape on tax_block_polygon_scratch using GIST(shape);
 -- as defined in legacy ETL:
 -- Source SDE tax_lot_polygon --> target Oracle SDO tax_lot_polygon_sdo
 --                            --> target Oracle SDO tax_lot_point
 -- tax_lot_polygon and tax_lot_polygon_sdo have almost identical columns
 -- tax_lot_polygon_sdo is not used in tiles, but is consumed by Geoserver (subject lots, I think)
-CREATE TABLE tax_lot_polygon (
+CREATE TABLE tax_lot_polygon_scratch (
     objectid INTEGER PRIMARY KEY, --not serial, we transfer from the source
     boro VARCHAR(1) NOT NULL,  --unsure why varchar
     block NUMERIC(10,0) NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE tax_lot_polygon (
 	bill_bbl_flag NUMERIC(5,0), 
 	globalid VARCHAR(38) NOT NULL,
     shape GEOMETRY(geometry, 2263));  --yes, there are a few with multiple outer rings
-CREATE INDEX tax_lot_polygonshape on tax_lot_polygon using GIST(shape);
+CREATE INDEX tax_lot_polygon_scratchshape on tax_lot_polygon_scratch using GIST(shape);
 
 
 

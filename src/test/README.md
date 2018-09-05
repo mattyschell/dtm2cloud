@@ -25,14 +25,14 @@ This directory contains resources for test setup.  Tend to your tests like a gar
 #### 1. PostgreSQL Scratch Source  
 
     Execute from the top-level project directory in MinGW 
-
-   ./src/test/resources/postgres-source.sh  
+                   
+   ./src/test/resources/postgres-source.sh                                                                
 
    or if your postgres superuser requires a password
 
    ./src/test/resources/postgres-source.sh optionalpasswordhere
 
-### 2. PostgreSQL Target
+### 2. PostgreSQL Target             
 
     ./src/test/resources/postgres-target.sh  
 
