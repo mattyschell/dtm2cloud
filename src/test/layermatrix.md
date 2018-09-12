@@ -38,6 +38,11 @@ These don't participate in the legacy ETL but should be part of our dtm2cloud pr
 |                 | Sub_Label | No spatial data, adds labels to TAX_LOT_POINT |
 
 
+## 3. DOF Reference layers and other tracking stuff 
+
+These are mostly DAB_% tables supporting the Digital Alteration Book and related views like V_BORO_BLOCK_CHANGES that summarize editing work.
+
+We may wish to partially translate some of these in the ETL for tracking purposes.
 
 
 ### 4. Reference layers consumed by Geoserver or Geowebcache

@@ -7,12 +7,13 @@
 SELECT
    CASE WHEN count(*) = 1 
    THEN 'creating extension postgis ' || (select default_version from pg_available_extensions where name = 'postgis') 
-                                      || ' if not installed'
+                                      || ' if not already created'
    ELSE 'MAYDAY: No postgis extension available in pg_available extensions'
    END AS postgis_clue
 FROM pg_available_extensions
 where name = 'postgis';
 create extension if not exists postgis;
+-- tax_block_polygon: In the legacy system this is an SDE dataset, actively edited
 CREATE TABLE tax_block_polygon (
 	objectid NUMERIC NOT NULL, 
 	boro VARCHAR(1) NOT NULL, 
@@ -29,19 +30,18 @@ CREATE TABLE tax_block_polygon (
     shape GEOMETRY(polygon, 2263)); 
 CREATE INDEX tax_block_polygonshape on tax_block_polygon using GIST(shape);
 -- from legacy ETL
--- Source SDE TAX_BLOCK_POLYGON --> target Oracle DTM TAX_BLOCK_POINT, tiled
+-- Source SDE TAX_BLOCK_POLYGON (above) --> target Oracle DTM TAX_BLOCK_POINT, tiled
 CREATE TABLE tax_block_point (
     boro VARCHAR(1) NOT NULL, 
 	block NUMERIC(10,0) NOT NULL, 
     shape GEOMETRY(point, 2263)); 
 CREATE INDEX tax_block_pointshape on tax_block_point using GIST(shape);
--- as currently defined in batch Oracle ETL
+-- Tax Lots in the legacy system:
 -- Source SDE tax_lot_polygon --> target Oracle DTM tax_lot_polygon_sdo (we are renaming it)
 --                            --> target tax_lot_point
 -- tax_lot_polygon and tax_lot_polygon_sdo have the same columns
--- tax_lot_polygon_sdo is not used in tiles, but is consumed by Geoserver (subject lots)
--- will also be used in FME for full target-source comparison.
--- tax_lot_polygon is the target, unedited postgis dataset.  
+-- tax_lot_polygon (formerly tax_lot_polygon_sdo) is not used in tiles, but is consumed by Geoserver (subject lots)
+-- will also be used in FME ETL for full target-source comparison
 CREATE TABLE tax_lot_polygon (
     objectid INTEGER PRIMARY KEY, --not serial, we transfer from the source
     boro VARCHAR(1) NOT NULL,  --unsure why varchar
@@ -88,8 +88,170 @@ CREATE TABLE tax_lot_point (
     shape GEOMETRY (point, 2263));
 CREATE INDEX tax_lot_pointbbl on tax_lot_point (bbl); 
 CREATE INDEX tax_lot_pointshape on tax_lot_point using GIST(shape);
-
-
-
-
-
+-- lot_face_point: Created by ETL from tax_lot_face
+CREATE TABLE lot_face_point (
+    tax_lot_face_type NUMERIC,
+    bbl VARCHAR(10),
+    length NUMERIC(38,8), -- 0.0000 to 9999.9999?
+    approx_length_flag NUMERIC,
+    angle NUMERIC(38,8),
+    delta_x NUMERIC(38,8),
+    delta_y NUMERIC(38,8),
+    boro VARCHAR(1),
+    block NUMERIC(10,0),
+    lot NUMERIC(5,0),
+    shape GEOMETRY (point,2263));
+CREATE INDEX lot_face_pointbbl on lot_face_point (bbl); 
+CREATE INDEX lot_face_pointshape on tax_lot_point using GIST(shape);
+-- air_label: adds labels to v_tax_lot_point
+CREATE TABLE air_label (
+    bbl VARCHAR(10) NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    count NUMERIC NOT NULL
+);
+CREATE INDEX air_labelbbl on air_label (bbl); 
+-- condo_label: adds labels to v_tax_lot_point
+CREATE TABLE condo_label (
+    bbl VARCHAR(10) NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    count NUMERIC NOT NULL
+);
+CREATE INDEX condo_labelbbl on condo_label (bbl); 
+-- sub_label: adds labels to v_tax_lot_point
+CREATE TABLE sub_label (
+    bbl VARCHAR(10) NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    count NUMERIC NOT NULL
+);
+CREATE INDEX sub_labelbbl on sub_label (bbl); 
+-- reuc_lots (SDE name REUC_Lots): not spatial, SDE-registered and versioned 
+-- filtered by v_reuc_lot (singular) then, I dunno maybe thats all
+CREATE TABLE reuc_lots (
+    objectid INTEGER PRIMARY KEY,
+    appurtenant_boro VARCHAR(1) NOT NULL,
+    appurtenant_block NUMERIC(10,0) NOT NULL,
+    appurtenant_lot NUMERIC(5,0) NOT NULL,
+    appurtenant_bbl VARCHAR(10),
+    reuc_number VARCHAR(20),
+    deleted_flag NUMERIC(5,0),
+    created_by VARCHAR(50),
+    created_date DATE,
+    last_modified_by VARCHAR(50),
+    last_modified_date DATE,
+    av_change NUMERIC(5,0),
+    bw_change NUMERIC(5,0),
+    effective_tax_year VARCHAR(50),
+    globalid VARCHAR(38) NOT NULL
+);
+CREATE INDEX reuc_lotsappurtenant_bbl on reuc_lots (appurtenant_bbl); 
+-- boundary: spatial lines, edited by Dept of Finance, 
+-- consumed directly in legacy Digital Tax Map
+-- will be ETL'd to target in new system
+CREATE TABLE boundary (
+    objectid INTEGER PRIMARY KEY,
+    boundary_type NUMERIC(5,0) NOT NULL,
+    type NUMERIC(5,0),
+    id_number VARCHAR(50),
+    description VARCHAR(50),
+    length NUMERIC(38,8),
+    modifier NUMERIC(5,0),
+    created_by VARCHAR(50),
+    created_date DATE,
+    last_modified_by VARCHAR(50),
+    last_modified_date DATE,
+    effective_tax_year VARCHAR(50),
+    globalid VARCHAR(38) NOT NULL,
+    shape GEOMETRY (linestring,2263));
+CREATE INDEX boundaryshape on boundary using GIST(shape);
+-- condo_units: edited by Dept of Finance, 
+-- consumed directly in legacy Digital Tax Map
+-- will be ETL'd to target in new system
+CREATE TABLE condo_units (	
+    objectid INTEGER PRIMARY KEY,
+	condo_boro VARCHAR(1) NOT NULL, 
+	condo_number NUMERIC(5,0) NOT NULL, 
+	condo_key NUMERIC(10,0), 
+	condo_base_boro VARCHAR(1), 
+	condo_base_block NUMERIC(10,0), 
+	condo_base_lot NUMERIC(5,0), 
+	condo_base_bbl VARCHAR(10), 
+	condo_base_bbl_key VARCHAR(15), 
+	unit_boro VARCHAR(1) NOT NULL, 
+	unit_block NUMERIC(10,0) NOT NULL, 
+	unit_lot NUMERIC(5,0) NOT NULL, 
+	unit_bbl VARCHAR(10), 
+	created_by VARCHAR(50), 
+	created_date DATE, 
+	last_modified_by VARCHAR(50), 
+	last_modified_date DATE, 
+	av_change NUMERIC(5,0), 
+	bw_change NUMERIC(5,0), 
+	effective_tax_year VARCHAR(50), 
+	unit_designation VARCHAR(10), 
+	globalid VARCHAR(38) NOT NULL);
+CREATE INDEX condo_unitscondo_base_bbl_key on condo_units (condo_base_bbl_key); 
+CREATE INDEX condo_unitscondo_base_bbl on condo_units (condo_base_bbl); 
+CREATE INDEX condo_unitscondo_key on condo_units (condo_key); 
+-- lot_face_possession_hooks: spatial points, edited by Dept of Finance, 
+-- consumed directly in legacy Digital Tax Map
+-- will be ETL'd to target in new system
+CREATE TABLE lot_face_possession_hooks (
+    objectid INTEGER PRIMARY KEY,
+	lot_face_possession_hook_type NUMERIC(5,0), 
+	rotation NUMERIC(38,8) NOT NULL , 
+	created_by VARCHAR(50), 
+	created_date DATE, 
+	last_modified_by VARCHAR(50), 
+	last_modified_date DATE, 
+	globalid VARCHAR(38) NOT NULL, 
+	shape GEOMETRY (point,2263));
+CREATE INDEX lot_face_possession_hooksshape on lot_face_possession_hooks using GIST(shape);
+-- misc_text: spatial points, edited by Dept of Finance, 
+-- consumed directly in legacy Digital Tax Map
+-- will be ETL'd to target in new system
+CREATE TABLE misc_text (
+    objectid INTEGER PRIMARY KEY,
+	misc_text VARCHAR(250), 
+	rotation NUMERIC(38,8),    -- can be null, unlike lot_face_possession_hooks rotation?
+	globalid VARCHAR(38) NOT NULL, 
+	shape GEOMETRY (point,2263));
+CREATE INDEX misc_textshape on misc_text using GIST(shape);
+-- possession_hooks: spatial points, edited by Dept of Finance, 
+-- consumed directly in legacy Digital Tax Map
+-- will be ETL'd to target in new system
+CREATE TABLE possession_hooks (
+    objectid INTEGER PRIMARY KEY,
+	hook_type NUMERIC(5,0), 
+	rotation NUMERIC(38,8) NOT NULL, 
+	created_by VARCHAR(50), 
+	created_date DATE, 
+	last_modified_by VARCHAR(50), 
+	last_modified_date DATE, 
+	globalid VARCHAR(38) NOT NULL, 
+	shape GEOMETRY (point,2263));
+CREATE INDEX possession_hooksshape on possession_hooks using GIST(shape);
+-- tax_lot_face: spatial lines, edited by Dept of Finance, 
+-- consumed directly in legacy Digital Tax Map
+-- will be ETL'd to target in new system
+CREATE TABLE tax_lot_face (
+    objectid INTEGER PRIMARY KEY,
+	tax_lot_face_type NUMERIC(5,0), 
+	boro VARCHAR(1) NOT NULL, 
+	block NUMERIC(10,0) NOT NULL, 
+	lot NUMERIC(5,0) NOT NULL, 
+	bbl NUMERIC(10), 
+	lot_face_length NUMERIC(38,8), 
+	source NUMERIC(5,0), 
+	block_face_flag NUMERIC(5,0), 
+	lot_face_length_error NUMERIC(5,0), 
+	created_by VARCHAR(50), 
+	created_date DATE, 
+	last_modified_by VARCHAR(50), 
+	last_modified_date DATE, 
+	av_change NUMERIC(5,0), 
+	bw_change NUMERIC(5,0), 
+	approx_length_flag NUMERIC(5,0) NOT NULL, 
+	globalid VARCHAR(38) NOT NULL, 
+	shape GEOMETRY (linestring,2263));
+CREATE INDEX tax_lot_facebbl on tax_lot_face (bbl); 
+CREATE INDEX tax_lot_faceshape on tax_lot_face using GIST(shape);

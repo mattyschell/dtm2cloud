@@ -104,14 +104,12 @@ if __name__ == "__main__":
     arcpy.RegisterAsVersioned_management(os.path.join(target_sde,
                                                       feature_dataset))
 
-    allobjects = feature_classes + entwined_tables + feature_supports + other_relationships
+    allgrantableobjects = feature_classes + entwined_tables 
 
-    for copiedobject in allobjects:
+    for copiedobject in allgrantableobjects:
         arcpy.ChangePrivileges_management(os.path.join(target_sde, copiedobject) , "DOITT_DTM_VIEWER", "GRANT","")
         arcpy.ChangePrivileges_management(os.path.join(target_sde, copiedobject) , "TAXMAP_VIEWER", "GRANT","")
         arcpy.ChangePrivileges_management(os.path.join(target_sde, copiedobject) , "DOF_READONLY", "GRANT","")
         arcpy.ChangePrivileges_management(os.path.join(target_sde, copiedobject) , "DOF_TAXMAP_EDITOR", "GRANT","GRANT")
         arcpy.ChangePrivileges_management(os.path.join(target_sde, copiedobject) , "DCP_MAP_EDITOR", "GRANT","GRANT")
     
-
-
