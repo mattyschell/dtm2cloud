@@ -18,7 +18,7 @@ These don't participate in the legacy ETL but should be part of our dtm2cloud pr
 | Table Name | Notes |
 | ------------- | ------------- | 
 | Boundary  | Lines. Geometries may be invalid | 
-| Condo_Units | Not spatial. DO NOT TOUCH on GEOCPRD |
+| Condo_Units | Not spatial. Careful: Don't confuse with the CONDO_UNIT view, which is dangerous and bad |
 | Lot_Face_Possession_Hooks | Points | 
 | Misc_Text | Points | 
 | Possession_Hooks | Points | 
@@ -55,6 +55,7 @@ Skipping for now
 
 ### 6. Trash layers that exist only to confuse us 
 
-| Table Name  | Notes |
+| Table/View Name  | Notes |
 | ------------- | ------------- | 
+| CONDO_UNIT   | Warning: Don't even look at this view. It is defined such that unconstrained selects write and fill the TEMP tablespace, resulting in alerts. It has no known application uses or referenced depedencies  |
 | Tax_Lot_Centroid   | Appears to have been at one time the legacy SDE version of TAX_LOT_FACE but is now empty. |
