@@ -1,9 +1,13 @@
 -- set up Digital Tax Map (target of ETL) database in PostgreSQL
--- first ./test/resources/createdb-postgres.sql then this fella
--- psql -U postgres -d dtmtest -f schema-postgres.sql
--- intended use for now: set up schema (public), populate with test data, 
---                       then tear it all down
--- must add the extension to this database if not already completed
+-- first, if testing locally 
+--    ./test/resources/createdb-postgres.sql 
+-- then this fella
+--    psql -U postgres -d dtmtest -f schema-postgres.sql
+-- or the real deal
+--    ./src/main/resources/createdb-postgres.sql
+-- then the real deal 
+-- export PGPASSWORD="IAmDtmWriter!"
+-- psql -h jeffbezos.taxes.us-east-1.rds.amazonaws.com -p 5432 -U dtmwrite -d dtm -f schema-postgres.sql
 SELECT
    CASE WHEN count(*) = 1 
    THEN 'creating extension postgis ' || (select default_version from pg_available_extensions where name = 'postgis') 
@@ -29,6 +33,7 @@ CREATE TABLE tax_block_polygon (
 	globalid VARCHAR(38) NOT NULL, 
     shape GEOMETRY(polygon, 2263)); 
 CREATE INDEX tax_block_polygonshape on tax_block_polygon using GIST(shape);
+grant select on tax_block_polygon to dtmread;
 -- from legacy ETL
 -- Source SDE TAX_BLOCK_POLYGON (above) --> target Oracle DTM TAX_BLOCK_POINT, tiled
 CREATE TABLE tax_block_point (
@@ -36,6 +41,7 @@ CREATE TABLE tax_block_point (
 	block NUMERIC(10,0) NOT NULL, 
     shape GEOMETRY(point, 2263)); 
 CREATE INDEX tax_block_pointshape on tax_block_point using GIST(shape);
+grant select on tax_block_point to dtmread;
 -- Tax Lots in the legacy system:
 -- Source SDE tax_lot_polygon --> target Oracle DTM tax_lot_polygon_sdo (we are renaming it)
 --                            --> target tax_lot_point
@@ -76,6 +82,7 @@ CREATE TABLE tax_lot_polygon (
     shape GEOMETRY(geometry, 2263));  --yes, there are a few with multiple outer rings
 CREATE INDEX tax_lot_polygonbbl on tax_lot_polygon (bbl); 
 CREATE INDEX tax_lot_polygonshape on tax_lot_polygon using GIST(shape);
+grant select on tax_lot_polygon to dtmread;
 -- Source SDE TAX_LOT_POLYGON --> target Oracle SDO TAX_LOT_POINT, tiled
 CREATE TABLE tax_lot_point (
     bbl VARCHAR(10) NOT NULL, 
@@ -88,6 +95,7 @@ CREATE TABLE tax_lot_point (
     shape GEOMETRY (point, 2263));
 CREATE INDEX tax_lot_pointbbl on tax_lot_point (bbl); 
 CREATE INDEX tax_lot_pointshape on tax_lot_point using GIST(shape);
+grant select on tax_lot_point to dtmread;
 -- lot_face_point: Created by ETL from tax_lot_face
 CREATE TABLE lot_face_point (
     tax_lot_face_type NUMERIC,
@@ -103,6 +111,7 @@ CREATE TABLE lot_face_point (
     shape GEOMETRY (point,2263));
 CREATE INDEX lot_face_pointbbl on lot_face_point (bbl); 
 CREATE INDEX lot_face_pointshape on tax_lot_point using GIST(shape);
+grant select on lot_face_point to dtmread;
 -- air_label: adds labels to v_tax_lot_point
 CREATE TABLE air_label (
     bbl VARCHAR(10) NOT NULL,
@@ -110,6 +119,7 @@ CREATE TABLE air_label (
     count NUMERIC NOT NULL
 );
 CREATE INDEX air_labelbbl on air_label (bbl); 
+-- no grant, dtmread does not need to see air_label
 -- condo_label: adds labels to v_tax_lot_point
 CREATE TABLE condo_label (
     bbl VARCHAR(10) NOT NULL,
@@ -117,6 +127,7 @@ CREATE TABLE condo_label (
     count NUMERIC NOT NULL
 );
 CREATE INDEX condo_labelbbl on condo_label (bbl); 
+-- no grant, dtmread does not need to see condo_label
 -- sub_label: adds labels to v_tax_lot_point
 CREATE TABLE sub_label (
     bbl VARCHAR(10) NOT NULL,
@@ -124,6 +135,7 @@ CREATE TABLE sub_label (
     count NUMERIC NOT NULL
 );
 CREATE INDEX sub_labelbbl on sub_label (bbl); 
+-- no grant, dtmread does not need to see sub_label
 -- reuc_lots (SDE name REUC_Lots): not spatial, SDE-registered and versioned 
 -- filtered by v_reuc_lot (singular) then, I dunno maybe thats all
 CREATE TABLE reuc_lots (
@@ -144,6 +156,7 @@ CREATE TABLE reuc_lots (
     globalid VARCHAR(38) NOT NULL
 );
 CREATE INDEX reuc_lotsappurtenant_bbl on reuc_lots (appurtenant_bbl); 
+-- no grant, dtmread does not need to see reuc_lots
 -- boundary: spatial lines, edited by Dept of Finance, 
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
@@ -163,6 +176,7 @@ CREATE TABLE boundary (
     globalid VARCHAR(38) NOT NULL,
     shape GEOMETRY (linestring,2263));
 CREATE INDEX boundaryshape on boundary using GIST(shape);
+grant select on boundary to dtmread;
 -- condo_units: edited by Dept of Finance, 
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
@@ -192,6 +206,7 @@ CREATE TABLE condo_units (
 CREATE INDEX condo_unitscondo_base_bbl_key on condo_units (condo_base_bbl_key); 
 CREATE INDEX condo_unitscondo_base_bbl on condo_units (condo_base_bbl); 
 CREATE INDEX condo_unitscondo_key on condo_units (condo_key); 
+grant select on condo_units to dtmread;
 -- lot_face_possession_hooks: spatial points, edited by Dept of Finance, 
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
@@ -206,6 +221,7 @@ CREATE TABLE lot_face_possession_hooks (
 	globalid VARCHAR(38) NOT NULL, 
 	shape GEOMETRY (point,2263));
 CREATE INDEX lot_face_possession_hooksshape on lot_face_possession_hooks using GIST(shape);
+grant select on lot_face_possession_hooks to dtmread;
 -- misc_text: spatial points, edited by Dept of Finance, 
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
@@ -216,6 +232,7 @@ CREATE TABLE misc_text (
 	globalid VARCHAR(38) NOT NULL, 
 	shape GEOMETRY (point,2263));
 CREATE INDEX misc_textshape on misc_text using GIST(shape);
+grant select on misc_text to dtmread;
 -- possession_hooks: spatial points, edited by Dept of Finance, 
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
@@ -230,6 +247,7 @@ CREATE TABLE possession_hooks (
 	globalid VARCHAR(38) NOT NULL, 
 	shape GEOMETRY (point,2263));
 CREATE INDEX possession_hooksshape on possession_hooks using GIST(shape);
+grant select on possession_hooks to dtmread;
 -- tax_lot_face: spatial lines, edited by Dept of Finance, 
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
@@ -255,3 +273,16 @@ CREATE TABLE tax_lot_face (
 	shape GEOMETRY (linestring,2263));
 CREATE INDEX tax_lot_facebbl on tax_lot_face (bbl); 
 CREATE INDEX tax_lot_faceshape on tax_lot_face using GIST(shape);
+grant select on tax_lot_face to dtmread;
+--view, wonder if this is a final integration check candidate
+CREATE OR REPLACE VIEW v_tax_lot_point
+AS SELECT l.shape, l.bbl, l.lot, l.condo_flag, 
+    ((COALESCE(l.air_rights_flag, ''::character varying)::text || COALESCE(l.condo_flag, ''::character varying)::text) || COALESCE(l.reuc_flag, ''::character varying)::text) || COALESCE(l.subterranean_flag, ''::character varying)::text AS all_flags, 
+    btrim(btrim(btrim(replace(replace((((((((((btrim(COALESCE(l.reuc_flag, ' '::character varying)::text) || '      '::text) || chr(13)) || chr(10)) || a.label::text) || chr(13)) || chr(10)) || c.label::text) || chr(13)) || chr(10)) || s.label::text, ((chr(13) || chr(10)) || chr(13)) || chr(10), chr(13) || chr(10)), ((chr(13) || chr(10)) || chr(13)) || chr(10), chr(13) || chr(10)), chr(13)), chr(10)), chr(13)) AS other_label, 
+    COALESCE(a.count, 0::numeric) + COALESCE(c.count, 0::numeric) + COALESCE(s.count, 0::numeric) + COALESCE(length(l.reuc_flag::text), 0)::numeric AS label_count, 
+    l.lot_area AS area
+   FROM tax_lot_point l
+   LEFT JOIN air_label a ON l.bbl::text = a.bbl::text
+   LEFT JOIN condo_label c ON l.bbl::text = c.bbl::text
+   LEFT JOIN sub_label s ON l.bbl::text = s.bbl::text;
+grant select on v_tax_lot_point to dtmread;
