@@ -274,15 +274,77 @@ CREATE TABLE tax_lot_face (
 CREATE INDEX tax_lot_facebbl on tax_lot_face (bbl); 
 CREATE INDEX tax_lot_faceshape on tax_lot_face using GIST(shape);
 grant select on tax_lot_face to dtmread;
---view, wonder if this is a final integration check candidate
+-- a view, a nice integration check candidate
+-- sample data from legacy database.  I do not think that other_label is supposed to look like this
+--      BBL        |LOT |CONDO_FLAG |ALL_FLAGS |OTHER_LABEL         |LABEL_COUNT    
+--      -----------|----|-----------|----------|--------------------|------------
+--      1001970011 |11  |C          |ACR       |R      ¶A9011¶C2014 |3
+--      1004020039 |39  |           |          |                    |0 
+--      1004050037 |37  |C          |C         |       ¶C1092       |1
+--      1012800010 |10  |           |AR        |R      ¶A9010       |2
+--      3001570009 |9   |           |ARS       |R      ¶A9009¶S8009 |3
+--      3032380005 |5   |C          |CR        |R      ¶C1486       |2
+-- My stated english spec for other_label
+--    Each on its own line, with no white space at the start or end of the string
+--    If Reuc lot, start string with R, then 6 spaces.  Otherwise just 6 spaces
+--    If air labels, condo labels, or sub labels exist, on a new line add that label
+--    If none of the above, null
+-- The view below produces
+--      bbl        |lot |condo_flag |all_flags |other_label         |label_count 
+--      -----------|----|-----------|----------|--------------------|------------
+--      1001970011 |11  |C          |ACR       |R      ¶A9011¶C2014 |3           
+--      1004020039 |39  |           |          |                    |0           
+--      1004050037 |37  |C          |C         |C1092               |1           
+--      1012800010 |10  |           |AR        |R      ¶A9010       |2           
+--      3001570009 |9   |           |ARS       |R      ¶A9009¶S8009 |3           
+--      3032380005 |5   |C          |CR        |R      ¶C1486       |2           
+-- A helpful visual aid
+-- select l.bbl, l.air_rights_flag, l.condo_flag, l.reuc_flag, a.*, c.*, s.*
+-- FROM tax_lot_point l
+--   LEFT JOIN air_label a ON l.bbl = a.bbl
+--   LEFT JOIN condo_label c ON l.bbl = c.bbl
+--   LEFT JOIN sub_label s ON l.bbl = s.bbl
+-- where l.bbl IN ('1001970011','1004020039','1012800010','3001570009','3032380005','1004050037')
+-- order by 1
+--
+-- Reminder: NULL || A is NULL, as is NULL + 1.  That's why  coalesce to empty strings or 0s
 CREATE OR REPLACE VIEW v_tax_lot_point
-AS SELECT l.shape, l.bbl, l.lot, l.condo_flag, 
-    ((COALESCE(l.air_rights_flag, ''::character varying)::text || COALESCE(l.condo_flag, ''::character varying)::text) || COALESCE(l.reuc_flag, ''::character varying)::text) || COALESCE(l.subterranean_flag, ''::character varying)::text AS all_flags, 
-    btrim(btrim(btrim(replace(replace((((((((((btrim(COALESCE(l.reuc_flag, ' '::character varying)::text) || '      '::text) || chr(13)) || chr(10)) || a.label::text) || chr(13)) || chr(10)) || c.label::text) || chr(13)) || chr(10)) || s.label::text, ((chr(13) || chr(10)) || chr(13)) || chr(10), chr(13) || chr(10)), ((chr(13) || chr(10)) || chr(13)) || chr(10), chr(13) || chr(10)), chr(13)), chr(10)), chr(13)) AS other_label, 
-    COALESCE(a.count, 0::numeric) + COALESCE(c.count, 0::numeric) + COALESCE(s.count, 0::numeric) + COALESCE(length(l.reuc_flag::text), 0)::numeric AS label_count, 
-    l.lot_area AS area
+( bbl, lot, condo_flag, all_flags, other_label, label_count, area, shape )
+AS 
+SELECT  l.bbl 
+       ,l.lot 
+       ,l.condo_flag::varchar(1) as condo_flag 
+       ,COALESCE(l.air_rights_flag, '') || COALESCE(l.condo_flag, '') || COALESCE(l.reuc_flag, '') || COALESCE(l.subterranean_flag, '')::varchar(4) as all_flags 
+       ,regexp_replace(
+                       regexp_replace( COALESCE(l.reuc_flag, ' ') || '      '  --other_label reuc flag: R then spaces
+                                       ||
+                                       CASE WHEN a.bbl IS NOT NULL    --other_label air label
+                                       THEN
+                                           CHR(10) || a.label 
+                                       ELSE
+                                           ''
+                                       END     
+                                       ||
+                                       CASE WHEN c.bbl IS NOT NULL    --other_label condo label
+                                       THEN
+                                           CHR(10) || c.label 
+                                       ELSE
+                                          ''                
+                                       END       
+                                       ||
+                                       CASE WHEN s.bbl IS NOT NULL     --other_label sub label
+                                       THEN
+                                           CHR(10) || s.label 
+                                       ELSE
+                                          ''
+                                       END    
+                                    ,'^\s+', '')                       --other_label replace leading white space
+                       ,'\s+$', '')::text AS other_label               --other_label replace trailing white space. THE END
+       ,COALESCE(a.count, 0) + COALESCE(c.count, 0) + COALESCE(s.count, 0) + COALESCE(length(l.reuc_flag), 0)::numeric AS label_count 
+       ,l.lot_area
+       ,l.shape
    FROM tax_lot_point l
-   LEFT JOIN air_label a ON l.bbl::text = a.bbl::text
-   LEFT JOIN condo_label c ON l.bbl::text = c.bbl::text
-   LEFT JOIN sub_label s ON l.bbl::text = s.bbl::text;
+   LEFT JOIN air_label a ON l.bbl = a.bbl
+   LEFT JOIN condo_label c ON l.bbl = c.bbl
+   LEFT JOIN sub_label s ON l.bbl = s.bbl
 grant select on v_tax_lot_point to dtmread;
