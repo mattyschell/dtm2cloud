@@ -276,6 +276,7 @@ CREATE INDEX tax_lot_faceshape on tax_lot_face using GIST(shape);
 grant select on tax_lot_face to dtmread;
 -- a view, a nice integration check candidate
 -- sample data from legacy database.  I do not think that other_label is supposed to look like this
+--
 --      BBL        |LOT |CONDO_FLAG |ALL_FLAGS |OTHER_LABEL         |LABEL_COUNT    
 --      -----------|----|-----------|----------|--------------------|------------
 --      1001970011 |11  |C          |ACR       |R      ¶A9011¶C2014 |3
@@ -284,30 +285,37 @@ grant select on tax_lot_face to dtmread;
 --      1012800010 |10  |           |AR        |R      ¶A9010       |2
 --      3001570009 |9   |           |ARS       |R      ¶A9009¶S8009 |3
 --      3032380005 |5   |C          |CR        |R      ¶C1486       |2
+--      1013300013 |13  |           |A         |      ¶A9013¶A9014¶A9015 |3
+--
 -- My stated english spec for other_label
---    Each on its own line, with no white space at the start or end of the string
---    If Reuc lot, start string with R, then 6 spaces.  Otherwise just 6 spaces
+--    No white space at the beginning or end of other_label
+--    Each on its own line:
+--    If Reuc lot, start string with R and 6 spaces 
 --    If air labels, condo labels, or sub labels exist, on a new line add that label
 --    If none of the above, null
 -- The view below produces
+--
 --      bbl        |lot |condo_flag |all_flags |other_label         |label_count 
 --      -----------|----|-----------|----------|--------------------|------------
 --      1001970011 |11  |C          |ACR       |R      ¶A9011¶C2014 |3           
 --      1004020039 |39  |           |          |                    |0           
 --      1004050037 |37  |C          |C         |C1092               |1           
---      1012800010 |10  |           |AR        |R      ¶A9010       |2           
+--      1012800010 |10  |           |AR        |R      ¶A9010       |2     
+--      1013300013 |13  |           |A         |A9013¶A9014¶A9015   |3              
 --      3001570009 |9   |           |ARS       |R      ¶A9009¶S8009 |3           
---      3032380005 |5   |C          |CR        |R      ¶C1486       |2           
+--      3032380005 |5   |C          |CR        |R      ¶C1486       |2  
+--
 -- A helpful visual aid
 -- select l.bbl, l.air_rights_flag, l.condo_flag, l.reuc_flag, a.*, c.*, s.*
 -- FROM tax_lot_point l
 --   LEFT JOIN air_label a ON l.bbl = a.bbl
 --   LEFT JOIN condo_label c ON l.bbl = c.bbl
 --   LEFT JOIN sub_label s ON l.bbl = s.bbl
--- where l.bbl IN ('1001970011','1004020039','1012800010','3001570009','3032380005','1004050037')
+-- where l.bbl IN 
+-- ('1001970011','1004020039','1012800010','3001570009','3032380005','1004050037','1013300013')
 -- order by 1
 --
--- Reminder: NULL || A is NULL, as is NULL + 1.  That's why  coalesce to empty strings or 0s
+-- Reminder: NULL || A = NULL, as is NULL + 1.  That's why coalesce to empty strings or 0s
 CREATE OR REPLACE VIEW v_tax_lot_point
 ( bbl, lot, condo_flag, all_flags, other_label, label_count, area, shape )
 AS 
@@ -346,5 +354,5 @@ SELECT  l.bbl
    FROM tax_lot_point l
    LEFT JOIN air_label a ON l.bbl = a.bbl
    LEFT JOIN condo_label c ON l.bbl = c.bbl
-   LEFT JOIN sub_label s ON l.bbl = s.bbl
+   LEFT JOIN sub_label s ON l.bbl = s.bbl;
 grant select on v_tax_lot_point to dtmread;
