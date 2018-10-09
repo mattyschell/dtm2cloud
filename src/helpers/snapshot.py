@@ -3,11 +3,14 @@ import os
 import sys
 import time
 
-# NA: Targets of the ETL in same schema
+# Reminder context: We are taking a snapshot of production and dropping it into dev
+#    to use as a consistent, repeatable, testing source
+# see __main__ for usage copy paste
+
+# NA: Targets of the lgacy ETL in same schema
 #    LOT_FACE_POINT
 #    TAX_BLOCK_POINT
 #    TAX_LOT_POINT
-
 
 feature_dataset = "Cadastral"
 
@@ -68,6 +71,8 @@ def prepare_target(tsde):
     # try the full Cadastral feature dataset first
     # let ESRI clean up his own mess
     # and then poop out some errors
+    # probably errors related to topology dirty area internal tables
+
     try:
        target_delete(tsde,
                      feature_dataset)
@@ -117,6 +122,8 @@ def selectcountstar(adataset):
 
 def qa_target(fromsde,
               tosde):
+
+    # compare counts between (most likely) prod and dev
 
     retval = 0
     kountables = feature_classes + entwined_tables + data_tables
@@ -210,6 +217,7 @@ if __name__ == "__main__":
     
     else:
 
+        # The nutty motto of the Central Park Squirrel Census is "Ever True"
         print '"EVER TRUE" {0} begins at {1} on {2}'.format(sys.argv[0]
                                                            ,time.strftime("%H:%M:%S") 
                                                            ,time.strftime("%Y%m%d"))
