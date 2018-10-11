@@ -120,6 +120,35 @@ def selectcountstar(adataset):
     return int(result.getOutput(0))
 
 
+def renamecol(anesridataset,
+              oldcol,
+              newcol,
+              coltype='SHORT'):
+
+    # esri copy management renames COUNT to COUNT_ 
+    # Not sure why, perhaps its reserved internally
+    # arcpy command to rename a column is not available till 10.2.1
+    # What's that grumbling noise?  Fix your heart_ or die!
+
+    if len(arcpy.ListFields(anesridataset,oldcol)) > 0:
+
+        print "Moving column {0} to {1} on {2}".format(oldcol,
+                                                       newcol,
+                                                       anesridataset)
+
+        arcpy.AddField_management(anesridataset,
+                                  newcol,
+                                  coltype)
+
+        arcpy.CalculateField_management(anesridataset,
+                                        newcol,
+                                        "!{0}!".format(oldcol),
+                                        "PYTHON")
+
+        arcpy.DeleteField_management(anesridataset, 
+                                     oldcol)
+
+
 def qa_target(fromsde,
               tosde):
 
@@ -177,6 +206,11 @@ def snapshotfunc(source_sde,
         arcpy.Copy_management(source_dt, 
                               target_dt)
 
+        # if our pal ESRI renames COUNT to COUNT_
+        renamecol(target_dt,
+                  'COUNT_',
+                  'COUNT')
+
     print "registering as versioned {0}".format(feature_dataset)
 
     arcpy.RegisterAsVersioned_management(os.path.join(target_sde,
@@ -217,7 +251,7 @@ if __name__ == "__main__":
     
     else:
 
-        # The nutty motto of the Central Park Squirrel Census is "Ever True"
+        # The nutty motto of the Central Park Squirrel Census is "Ever True" 
         print '"EVER TRUE" {0} begins at {1} on {2}'.format(sys.argv[0]
                                                            ,time.strftime("%H:%M:%S") 
                                                            ,time.strftime("%Y%m%d"))

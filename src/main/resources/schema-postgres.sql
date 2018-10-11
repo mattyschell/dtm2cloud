@@ -46,14 +46,16 @@ grant select on tax_block_point to dtmread;
 -- Source SDE tax_lot_polygon --> target Oracle DTM tax_lot_polygon_sdo (we are renaming it)
 --                            --> target tax_lot_point
 -- tax_lot_polygon and tax_lot_polygon_sdo have the same columns
--- tax_lot_polygon (formerly tax_lot_polygon_sdo) is not used in tiles, but is consumed by Geoserver (subject lots)
--- will also be used in FME ETL for full target-source comparison
+-- tax_lot_polygon (formerly tax_lot_polygon_sdo) is not used in tiles, 
+--   but is consumed by Geoserver (subject lots)
+-- bbls in tax_lot_polygon are unique.  A few (~70) multipolygons exist
+--    For tax_lot_point we explode mutipolygons into separate, non-unique bbl records
 CREATE TABLE tax_lot_polygon (
     objectid INTEGER PRIMARY KEY, --not serial, we transfer from the source
     boro VARCHAR(1) NOT NULL,  --unsure why varchar
     block NUMERIC(10,0) NOT NULL,
     lot NUMERIC(5,0) NOT NULL,
-    bbl VARCHAR(10),                  -- perhaps this can be made unique
+    bbl VARCHAR(10),                  
     community_district NUMERIC(5,0),
     regular_lot_indicator VARCHAR(1),
     number_lot_sides NUMERIC(5,0),
@@ -80,10 +82,13 @@ CREATE TABLE tax_lot_polygon (
 	bill_bbl_flag NUMERIC(5,0), 
 	globalid VARCHAR(38) NOT NULL,
     shape GEOMETRY(geometry, 2263));  --yes, there are a few with multiple outer rings
-CREATE INDEX tax_lot_polygonbbl on tax_lot_polygon (bbl); 
+CREATE UNIQUE INDEX tax_lot_polygonbbl on tax_lot_polygon (bbl); 
 CREATE INDEX tax_lot_polygonshape on tax_lot_polygon using GIST(shape);
 grant select on tax_lot_polygon to dtmread;
 -- Source SDE TAX_LOT_POLYGON --> target Oracle SDO TAX_LOT_POINT, tiled
+--   Duplicate bbls exist (~70) for multipolygon tax_lot_polygon records
+--   Each separate piece (usually across the street from each other)
+--   Gets a separate point and label  
 CREATE TABLE tax_lot_point (
     bbl VARCHAR(10) NOT NULL, 
 	lot NUMERIC(5,0) NOT NULL, 
@@ -283,9 +288,9 @@ grant select on tax_lot_face to dtmread;
 --      1004020039 |39  |           |          |                    |0 
 --      1004050037 |37  |C          |C         |       ¶C1092       |1
 --      1012800010 |10  |           |AR        |R      ¶A9010       |2
+--      1013300013 |13  |           |A         |      ¶A9013¶A9014¶A9015 |3
 --      3001570009 |9   |           |ARS       |R      ¶A9009¶S8009 |3
 --      3032380005 |5   |C          |CR        |R      ¶C1486       |2
---      1013300013 |13  |           |A         |      ¶A9013¶A9014¶A9015 |3
 --
 -- My stated english spec for other_label
 --    No white space at the beginning or end of other_label
@@ -293,7 +298,7 @@ grant select on tax_lot_face to dtmread;
 --    If Reuc lot, start string with R and 6 spaces 
 --    If air labels, condo labels, or sub labels exist, on a new line add that label
 --    If none of the above, null
--- The view below produces
+-- The new postgres view below produces:
 --
 --      bbl        |lot |condo_flag |all_flags |other_label         |label_count 
 --      -----------|----|-----------|----------|--------------------|------------
