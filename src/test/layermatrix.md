@@ -84,6 +84,7 @@ The notes below were noted during October 2018 puzzling.  They tend to represent
 A list of puzzling candidates, likely all similar to the above.  These are legacy duplicate bbl tax_lot_point records (multiple labels) that correspond to unique tax_lot_polygon_sdo records where the tax_lot_polygon_sdo is a single outer ring.
 
 | BBL | 
+| ------------- |
 | 1006050046 |
 | 1006050047 |
 | 2025418900 |
