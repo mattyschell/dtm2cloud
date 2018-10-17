@@ -1,1 +1,1 @@
-drop database if exists dtmtest;
+drop database if exists dtm;

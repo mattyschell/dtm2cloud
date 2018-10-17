@@ -1,13 +1,11 @@
--- set up Digital Tax Map (target of ETL) database in PostgreSQL
--- first, if testing locally 
---    ./test/resources/createdb-postgres.sql 
--- then this fella
---    psql -U postgres -d dtmtest -f schema-postgres.sql
--- or the real deal
+-- set up Digital Tax Map database in PostgreSQL
+-- first
 --    ./src/main/resources/createdb-postgres.sql
--- then the real deal 
--- export PGPASSWORD="IAmDtmWriter!"
--- psql -h jeffbezos.taxes.us-east-1.rds.amazonaws.com -p 5432 -U dtmwrite -d dtm -f schema-postgres.sql
+-- then this fella, test-style
+--    psql -h localhost -U dtmwrite -d dtm -f src/test/resources/schema-postgres.sql
+-- or real deal-style
+--   export PGPASSWORD="IAmDtmWriter!"
+--   psql -h jeffbezos.taxes.us-east-1.rds.amazonaws.com -p 5432 -U dtmwrite -d dtm -f src/test/resources/schema-postgres.sql
 SELECT
    CASE WHEN count(*) = 1 
    THEN 'creating extension postgis ' || (select default_version from pg_available_extensions where name = 'postgis') 
@@ -19,7 +17,7 @@ where name = 'postgis';
 create extension if not exists postgis;
 -- tax_block_polygon: In the legacy system this is an SDE dataset, actively edited
 CREATE TABLE tax_block_polygon (
-	objectid NUMERIC NOT NULL, 
+	objectid serial primary key,
 	boro VARCHAR(1) NOT NULL, 
 	block NUMERIC(10,0) NOT NULL, 
 	eop_overlap_flag NUMERIC(5,0), 
@@ -51,7 +49,7 @@ grant select on tax_block_point to dtmread;
 -- bbls in tax_lot_polygon are unique.  A few (~70) multipolygons exist
 --    For tax_lot_point we explode mutipolygons into separate, non-unique bbl records
 CREATE TABLE tax_lot_polygon (
-    objectid INTEGER PRIMARY KEY, --not serial, we transfer from the source
+    objectid serial primary key, 
     boro VARCHAR(1) NOT NULL,  --unsure why varchar
     block NUMERIC(10,0) NOT NULL,
     lot NUMERIC(5,0) NOT NULL,
@@ -144,7 +142,7 @@ CREATE INDEX sub_labelbbl on sub_label (bbl);
 -- reuc_lots (SDE name REUC_Lots): not spatial, SDE-registered and versioned 
 -- filtered by v_reuc_lot (singular) then, I dunno maybe thats all
 CREATE TABLE reuc_lots (
-    objectid INTEGER PRIMARY KEY,
+    objectid serial primary key,
     appurtenant_boro VARCHAR(1) NOT NULL,
     appurtenant_block NUMERIC(10,0) NOT NULL,
     appurtenant_lot NUMERIC(5,0) NOT NULL,
@@ -166,7 +164,7 @@ CREATE INDEX reuc_lotsappurtenant_bbl on reuc_lots (appurtenant_bbl);
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
 CREATE TABLE boundary (
-    objectid INTEGER PRIMARY KEY,
+    objectid serial primary key,
     boundary_type NUMERIC(5,0) NOT NULL,
     type NUMERIC(5,0),
     id_number VARCHAR(50),
@@ -186,7 +184,7 @@ grant select on boundary to dtmread;
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
 CREATE TABLE condo_units (	
-    objectid INTEGER PRIMARY KEY,
+    objectid serial primary key,
 	condo_boro VARCHAR(1) NOT NULL, 
 	condo_number NUMERIC(5,0) NOT NULL, 
 	condo_key NUMERIC(10,0), 
@@ -216,7 +214,7 @@ grant select on condo_units to dtmread;
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
 CREATE TABLE lot_face_possession_hooks (
-    objectid INTEGER PRIMARY KEY,
+    objectid serial primary key,
 	lot_face_possession_hook_type NUMERIC(5,0), 
 	rotation NUMERIC(38,8) NOT NULL , 
 	created_by VARCHAR(50), 
@@ -231,7 +229,7 @@ grant select on lot_face_possession_hooks to dtmread;
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
 CREATE TABLE misc_text (
-    objectid INTEGER PRIMARY KEY,
+    objectid serial primary key,
 	misc_text VARCHAR(250), 
 	rotation NUMERIC(38,8),    -- can be null, unlike lot_face_possession_hooks rotation?
 	globalid VARCHAR(38) NOT NULL, 
@@ -242,7 +240,7 @@ grant select on misc_text to dtmread;
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
 CREATE TABLE possession_hooks (
-    objectid INTEGER PRIMARY KEY,
+    objectid serial primary key,
 	hook_type NUMERIC(5,0), 
 	rotation NUMERIC(38,8) NOT NULL, 
 	created_by VARCHAR(50), 
@@ -257,7 +255,7 @@ grant select on possession_hooks to dtmread;
 -- consumed directly in legacy Digital Tax Map
 -- will be ETL'd to target in new system
 CREATE TABLE tax_lot_face (
-    objectid INTEGER PRIMARY KEY,
+    objectid serial primary key,
 	tax_lot_face_type NUMERIC(5,0), 
 	boro VARCHAR(1) NOT NULL, 
 	block NUMERIC(10,0) NOT NULL, 

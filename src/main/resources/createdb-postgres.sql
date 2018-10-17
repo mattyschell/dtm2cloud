@@ -22,7 +22,7 @@ FROM pg_available_extensions
 where name = 'postgis';
 create extension if not exists postgis;
 -- this is unncessary?
--- will warn about postgis dictionary vies since rdsadmin has pre-faffed them
+-- will warn about postgis dictionary views since rdsadmin has pre-faffed them
 --grant select on all tables in schema public to dtmread; 
 -- schema-postgres.sql will need to grant individual table selects (as necessary)
 

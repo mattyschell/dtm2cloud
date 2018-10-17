@@ -53,7 +53,27 @@ class SdeTestFc(object):
             arcpy.RegisterAsVersioned_management(self.sdepath)
 
     def field_remapping(self):
+
+        #subclasses return fields to redefine as necessary
         pass
+
+    def _field_remapping(self,
+                         cols):
+
+        # called from subclasses with specific columns
+        for key,val in cols.iteritems():
+
+            arcpy.AddField_management(self.sdetarget,
+                                      val['colname'],
+                                      val['coltype'])
+
+            arcpy.CalculateField_management(self.sdetarget,
+                                            val['colname'],
+                                            "!{0}!".format(key),
+                                            "PYTHON")
+
+            arcpy.DeleteField_management(self.sdetarget, 
+                                         key)
 
 class TaxLotPolygon(SdeTestFc):
 
@@ -93,20 +113,8 @@ class TaxLotPolygon(SdeTestFc):
         cols.update({'effective_': {'colname': 'effective_tax_year', 'coltype' : 'TEXT'}})
         cols.update({'bill_bbl_f': {'colname': 'bill_bbl_flag', 'coltype' : 'SHORT'}})
 
-        # and nothing hurt
-        for key,val in cols.iteritems():
-
-            arcpy.AddField_management(self.sdetarget,
-                                      val['colname'],
-                                      val['coltype'])
-
-            arcpy.CalculateField_management(self.sdetarget,
-                                            val['colname'],
-                                            "!{0}!".format(key),
-                                            "PYTHON")
-
-            arcpy.DeleteField_management(self.sdetarget, 
-                                         key)
+        self._field_remapping(cols)
+        
 
 class TaxBlockPolygon(SdeTestFc):
 
@@ -124,15 +132,60 @@ class TaxBlockPolygon(SdeTestFc):
 
     def field_remapping(self):
 
-        # todo. so it goes
-        pass
+        # and nothing hurt
+        cols = {}
+
+        cols = {'eop_overla': {'colname': 'eop_overlap_flag', 'coltype' : 'TEXT'}}
+        cols.update({'jagged_st_': {'colname': 'jagged_st_flag', 'coltype' : 'TEXT'}})        
+        cols.update({'created_da': {'colname': 'created_date', 'coltype' : 'DATE'}})
+        cols.update({'last_modif': {'colname': 'last_modified_by', 'coltype' : 'TEXT'}})
+        cols.update({'last_mo_01': {'colname': 'last_modified_date', 'coltype' : 'DATE'}})
+        cols.update({'section_nu': {'colname': 'section_number', 'coltype' : 'DOUBLE'}})
+        cols.update({'volume_num': {'colname': 'volume_number', 'coltype' : 'DOUBLE'}})
+
+        self._field_remapping(cols)
+
+
+class TaxLotFace(SdeTestFc):
+
+    def __init__(self,
+                 featureclassname,
+                 sdetarget,
+                 shpsource,
+                 featuredataset):
+        
+        SdeTestFc.__init__(self,
+                           featureclassname,
+                           sdetarget,
+                           shpsource,
+                           featuredataset)
+
+    def field_remapping(self):
+
+        # must language always be a donkey?
+        # why not a braying gemstone,
+        # a topaz ocean
+        # whose lettered waves approach
+        # obediently then shatter
+        # on the shore
+        oceanofshpcolumns = {}
+
+        oceanofshpcolumns = {'tax_lot_fa': {'colname': 'tax_lot_face_type', 'coltype' : 'DOUBLE'}}
+        oceanofshpcolumns.update({'lot_face_l': {'colname': 'lot_face_length', 'coltype' : 'DOUBLE'}})       
+        oceanofshpcolumns.update({'lot_fac_01': {'colname': 'lot_face_length_error', 'coltype' : 'DOUBLE'}})
+        oceanofshpcolumns.update({'created_da': {'colname': 'created_date', 'coltype' : 'DATE'}})
+        oceanofshpcolumns.update({'last_modif': {'colname': 'last_modified_by', 'coltype' : 'TEXT'}})
+        oceanofshpcolumns.update({'last_mo_01': {'colname': 'last_modified_date', 'coltype' : 'DATE'}})
+        oceanofshpcolumns.update({'approx_len': {'colname': 'approx_length_flag', 'coltype' : 'DOUBLE'}})
+
+        self._field_remapping(oceanofshpcolumns)
 
 
 if __name__ == "__main__":
 
     if len(sys.argv) != 2:
-        msg = "{0} requests 1 input, the sde file, instead received {1}".format(sys.argv[0],
-                                                                                len(sys.argv))
+        msg = "I {0} request but 1 input, the sde file, instead I have been given {1} inputs".format(sys.argv[0]
+                                                                                                    ,(len(sys.argv) - 1))
         print msg                                                                        
         raise ValueError(msg)
 
@@ -143,32 +196,43 @@ if __name__ == "__main__":
     cwd = os.path.dirname(os.path.realpath(__file__))
 
     print "attempting to delete " + str(os.path.join(sdefile,'Cadastral'))
-    arcpy.Delete_management(os.path.join(sdefile,
-                                         'Cadastral'))
+    arcpy.Delete_management(os.path.join(sdefile
+                                        ,'Cadastral'))
 
     print "Creating Cadastral feature dataset in {0}".format(sdefile)
-    arcpy.CreateFeatureDataset_management(sdefile, 
-                                          "Cadastral", 
-                                          os.path.join(cwd, "tax_block_polygon.prj"))
+    arcpy.CreateFeatureDataset_management(sdefile
+                                         ,"Cadastral" 
+                                         ,os.path.join(cwd, "tax_block_polygon.prj"))
 
     # TAX_BLOCK_POLYGON
-    tax_block_polygon = TaxBlockPolygon('Tax_Block_Polygon',
-                                        sdefile,
-                                        os.path.join(cwd, "tax_block_polygon.shp"),
-                                        'Cadastral')
+    tax_block_polygon = TaxBlockPolygon('Tax_Block_Polygon'
+                                       ,sdefile
+                                       ,os.path.join(cwd, "tax_block_polygon.shp")
+                                       ,'Cadastral')
 
     tax_block_polygon.loadtarget()
 
-    print "loaded and registered as versioned {0} in {1}".format("Tax_Block_Polygon",
-                                                                 sdefile)
+    print "loaded and registered as versioned {0} in {1}".format("Tax_Block_Polygon"
+                                                                ,sdefile)
 
     # TAX_LOT_POLYGON
-    tax_lot_polygon = TaxLotPolygon('Tax_Lot_Polygon',
-                                    sdefile,
-                                    os.path.join(cwd, "tax_lot_polygon.shp"),
-                                    'Cadastral')
+    tax_lot_polygon = TaxLotPolygon('Tax_Lot_Polygon'
+                                   ,sdefile
+                                   ,os.path.join(cwd, "tax_lot_polygon.shp")
+                                   ,'Cadastral')
 
     tax_lot_polygon.loadtarget()
 
-    print "loaded and registered as versioned {0} in {1}".format("Tax_Lot_Polygon",
-                                                                 sdefile)
+    print "loaded and registered as versioned {0} in {1}".format("Tax_Lot_Polygon"
+                                                                ,sdefile)
+
+    # TAX_LOT_FACE
+    tax_lot_face = TaxLotFace('Tax_Lot_Face'
+                             ,sdefile
+                             ,os.path.join(cwd, "tax_lot_face.shp")
+                             ,'Cadastral')
+
+    tax_lot_face.loadtarget()
+
+    print "loaded and registered as versioned {0} in {1}".format("Tax_Lot_Face"
+                                                                ,sdefile)

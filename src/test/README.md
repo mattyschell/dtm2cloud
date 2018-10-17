@@ -1,20 +1,20 @@
 ## WIP Test Setup For This WIP Project
 
-This directory contains resources for test setup.  Tend to your tests like a garden.
+This directory contains resources for test setup.  Our goal is to create "edited" source data in SDE and "unedited" data in PostgreSQL and then turn the ETL loose to restore order.
 
 ### Hand-wavy outline: Create Known State Test Data in Postgis and Oracle SDE
 
-1. PostgreSQL Scratch Source 
+1. Create PostgreSQL Scratch Source 
 
-    Creates a postgis database "dtmtest" on localhost with source (legacy SDE) schema and "edited" data.  This is a scratch dataset.
+    Provisions a postgis database "dtm" on localhost with source (legacy SDE) schema and "edited" data.  These are scratch datasets.
 
-2. PostgreSQL Target
+2. Create PostgreSQL Target
 
-   Creates the target DTM schema and known state "unedited" test data.
+   Creates the target DTM tables and some known state "unedited" test data.
 
-3. SDE Source
+3. Reverse-engineer SDE Source
 
-   Uses the scratch postgis schema and "edited" data from step 1 to reverse-engineer the legacy Oracle SDE source.  
+   Uses the scratch postgis schema and "edited" data from step 1 to reverse-engineer a legacy Oracle SDE source.  
 
 ### Expectations:
 
@@ -22,7 +22,7 @@ This directory contains resources for test setup.  Tend to your tests like a gar
 2. Python 2.7 with arcpy (ArcGIS 10.2+)
 3. An sde connection file that points to an existing SDE geodatabase
 
-#### 1. PostgreSQL Scratch Source  
+#### 1. Create PostgreSQL Test DB and Scratch SDE Source Data
 
     Execute from the top-level project directory in MinGW 
                    
@@ -32,23 +32,17 @@ This directory contains resources for test setup.  Tend to your tests like a gar
 
    ./src/test/resources/postgres-source.sh optionalpasswordhere
 
-### 2. PostgreSQL Target             
+### 2. Create PostgreSQL Target Data            
 
     ./src/test/resources/postgres-target.sh  
 
-   or if your postgres superuser requires a password
+    NA superuser password. We leverage the dtmwrite user created in step 1.   
 
-   ./src/test/resources/postgres-target.sh optionalpasswordhere
-
-#### 3. SDE Source
+#### 3. Reverse-engineer SDE Source
 
    ./src/test/resources/sde-source.sh "C:\path\to\test_sde_schema@geocdev.sde"
 
    ex
 
    ./src/test/resources/sde-source.sh "c:\matt_projects\database_utils\arcgisconnections\dof_dtm@geocdev.sde"
-
-
-
-
-
+   

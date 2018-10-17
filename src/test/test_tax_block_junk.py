@@ -10,7 +10,7 @@ class TaxBlockTestCase(unittest.TestCase):
 
         # shared
         self.user = 'postgres'
-        self.database = 'dtmtest'
+        self.database = 'dtm'
         self.resourcepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'resources') 
         self.testsqlfile = os.path.join(self.resourcepath,

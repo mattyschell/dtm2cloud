@@ -4,11 +4,13 @@
 # execute from mingw at the top dtm2cloud directory like
 # > ./src/test/resources/postgres-source.sh
 superpw=$1
-printf "postgres-source.sh is provisioning a dtmtest database and scratch source data"
-PGPASSWORD=$superpw psql -U postgres -d postgres -f src/test/resources/createdb-postgres.sql
-PGPASSWORD=$superpw psql -U postgres -d dtmtest -f src/test/resources/schema-postgres.sql
-PGPASSWORD=$superpw psql -U postgres -d dtmtest -f src/test/resources/data-postgres.sql
-# tests tests etc yeah
-# caller then probably does:
-# psql -U postgres -d postgres -f teardowndb-postgres.sql
+printf "postgres-source.sh is provisioning a dtm database, dtmwrite and dtmread users, and scratch source data"
+# Caution: this one under /test/resources will drop a dtm database and users
+PGPASSWORD=$superpw psql -h localhost -U postgres -d postgres -f src/test/resources/dropdb-postgres.sql
+# this is the standard create database, users, etc
+export DTMPASSWORD=
+export DTMROPASSWORD=
+PGPASSWORD=$superpw psql -h localhost -U postgres -d postgres -v v1=$DTMPASSWORD -v v2=$DTMROPASSWORD -f src/main/resources/createdb-postgres.sql 
+psql -h localhost -U dtmwrite -d dtm -f src/test/resources/schema-postgres.sql
+psql -h localhost -U dtmwrite -d dtm -f src/test/resources/data-postgres.sql
 printf "exiting from postgres-source.sh"

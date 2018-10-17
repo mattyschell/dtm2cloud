@@ -10,12 +10,15 @@ printf "sde-source.sh is downloading source data and uploading to sde"
 # remove shps in case of unexpected outcome 
 rm src/test/resources/tax_block_polygon.*
 rm src/test/resources/tax_lot_polygon.*
+rm src/test/resources/tax_lot_face.*
 # lovely test data load and shp creation from postgis
-pgsql2shp -f "src/test/resources/tax_block_polygon" -h localhost -u postgres dtmtest "tax_block_polygon_scratch"
-pgsql2shp -f "src/test/resources/tax_lot_polygon" -h localhost -u postgres dtmtest "tax_lot_polygon_scratch"
+pgsql2shp -f "src/test/resources/tax_block_polygon" -h localhost -u dtmread dtm "tax_block_polygon_scratch"
+pgsql2shp -f "src/test/resources/tax_lot_polygon" -h localhost -u dtmread dtm "tax_lot_polygon_scratch"
+pgsql2shp -f "src/test/resources/tax_lot_face" -h localhost -u dtmread dtm "tax_lot_face_scratch"
 # not so lovely load SDE dataset 
 python src/test/resources/sde-source.py $sdeconn
 # tidy up temp files
 rm src/test/resources/tax_block_polygon.*
 rm src/test/resources/tax_lot_polygon.*
+rm src/test/resources/tax_lot_face.*
 printf "exiting from sde-source.sh"

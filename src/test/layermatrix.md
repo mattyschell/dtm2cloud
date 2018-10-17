@@ -24,16 +24,16 @@ These don't participate in the legacy ETL but should be part of our dtm2cloud pr
 | Misc_Text | Points | 
 | Possession_Hooks | Points | 
 | REUC_Lots | Not spatial.  Need to verify relationship to V_REUC_LOT |
-| Tax_Block_Polygon | Polygons, good name! Also ETLs into TAX_BLOCK, a category #5.  Rarely changes  | 
+| Tax_Block_Polygon | Polygons, rarely edited. Also ETLs into TAX_BLOCK, a category #5 | 
 | Tax_Lot_Face | Lines. Geometries may be invalid. Also feeds into LOT_FACE_POINT in category #2 below | 
 
 ### 2. Layers that are actively edited by the Department of Finance, ETL'd, then consumed by Geowebcache 
 
 | Target Table/View Name  | DOF Source | Notes |
 | ------------- | ------------- | ------------- |
-| LOT_FACE_POINT  | Tax_Lot_Face  | Midpoint of the line I think, selected attributes transferred and some attributes derived |
-| TAX_BLOCK_POINT   | Tax_Block_Polygon  | Centroid of the polygon, selected attributes transferred. Rarely (if ever?) change |
-| TAX_LOT_POINT   | Tax_Lot_Polygon  | Centroid of the polygon, selected attributes transferred |
+| LOT_FACE_POINT | Tax_Lot_Face | Midpoint of the line I think, selected attributes transferred and some attributes derived |
+| TAX_BLOCK_POINT | Tax_Block_Polygon | Centroid of the polygon, selected attributes transferred. Rarely (if ever?) change |
+| TAX_LOT_POINT | Tax_Lot_Polygon | Centroid of the polygon, selected attributes transferred |
 | V_TAX_LOT_POINT | Air_Label | No spatial data, adds labels to TAX_LOT_POINT |
 |                 | Condo_Label | No spatial data, adds labels to TAX_LOT_POINT |
 |                 | Sub_Label | No spatial data, adds labels to TAX_LOT_POINT |
@@ -53,7 +53,10 @@ Skipping for now
 
 ### 5. Layers that are legacy ETL'd but do not participate in tiles
 
-Skipping for now
+| Table Name | Notes |
+| ------------- | ------------- | 
+| TAX_BLOCK | This is a subset (87%) of all tax_block_polygon records with some formatted columns.  Tax block labels come from tax_block_point, so this one is a bit of a mystery. Could get pushed to category #6 if it's not careful. |
+
 
 
 ### 6. Trash layers that exist only to confuse us 
