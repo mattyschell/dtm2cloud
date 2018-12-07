@@ -1,14 +1,5 @@
 -- /test/resources/ EZ setup of scratch source schema in PostgreSQL
 -- It is scratch because we are using it to dump out shps and import into SDE
-SELECT
-   CASE WHEN count(*) = 1 
-   THEN 'creating extension postgis ' || (select default_version from pg_available_extensions where name = 'postgis') 
-                                      || ' if not installed'
-   ELSE 'MAYDAY: No postgis extension available in pg_available extensions'
-   END AS postgis_clue
-FROM pg_available_extensions
-where name = 'postgis';
-create extension if not exists postgis;
 -- as defined in legacy ETL:
 -- Source SDE TAX_BLOCK_POLYGON --> target Oracle SDO TAX_BLOCK (not tiled)
 --                              --> target Oracle SDO TAX_BLOCK_POINT
@@ -26,7 +17,7 @@ CREATE TABLE tax_block_polygon_scratch (
 	section_number NUMERIC(5,0) NOT NULL, 
 	volume_number NUMERIC(5,0) NOT NULL, 
 	globalid VARCHAR(38) NOT NULL, 
-    shape GEOMETRY(polygon, 2263)); 
+    shape GEOMETRY(multipolygon, 2263)); 
 CREATE INDEX tax_block_polygon_scratchshape on tax_block_polygon_scratch using GIST(shape);
 grant select on tax_block_polygon_scratch to dtmread;
 -- as defined in legacy ETL:
@@ -65,7 +56,7 @@ CREATE TABLE tax_lot_polygon_scratch (
 	effective_tax_year VARCHAR(50), 
 	bill_bbl_flag NUMERIC(5,0), 
 	globalid VARCHAR(38) NOT NULL,
-    shape GEOMETRY(geometry, 2263));  --yes, there are a few with multiple outer rings
+    shape GEOMETRY(multipolygon, 2263));  --yes, there are a few with multiple outer rings
 CREATE INDEX tax_lot_polygon_scratchshape on tax_lot_polygon_scratch using GIST(shape);
 grant select on tax_lot_polygon_scratch to dtmread;
 -- as defined in legacy ETL:
@@ -91,7 +82,7 @@ CREATE TABLE tax_lot_face_scratch (
 	bw_change NUMERIC(5,0), 
     approx_length_flag NUMERIC(5,0),
 	globalid VARCHAR(38) NOT NULL,
-    shape GEOMETRY(linestring, 2263));  
+    shape GEOMETRY(multilinestring, 2263));  
 CREATE INDEX tax_lot_face_scratchshape on tax_lot_face_scratch using GIST(shape);
 grant select on tax_lot_face_scratch to dtmread;
 

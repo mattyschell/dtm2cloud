@@ -21,8 +21,14 @@ SELECT
 FROM pg_available_extensions
 where name = 'postgis';
 create extension if not exists postgis;
--- this is unncessary?
--- will warn about postgis dictionary views since rdsadmin has pre-faffed them
---grant select on all tables in schema public to dtmread; 
--- schema-postgres.sql will need to grant individual table selects (as necessary)
-
+-- uuid extension is only for test data generation at the moment
+-- todo: get ESRI globalids and get this out of here
+SELECT
+   CASE WHEN count(*) = 1 
+   THEN 'creating extension uuid-ossp ' || (select default_version from pg_available_extensions where name = 'uuid-ossp') 
+                                        || ' if not installed'
+   ELSE 'MAYDAY: No uuid extension available in pg_available extensions'
+   END AS uuid_clue
+FROM pg_available_extensions
+where name = 'uuid-ossp';
+create extension if not exists "uuid-ossp";

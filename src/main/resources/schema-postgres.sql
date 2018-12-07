@@ -6,15 +6,6 @@
 -- or real deal-style
 --   export PGPASSWORD="IAmDtmWriter!"
 --   psql -h jeffbezos.taxes.us-east-1.rds.amazonaws.com -p 5432 -U dtmwrite -d dtm -f src/test/resources/schema-postgres.sql
-SELECT
-   CASE WHEN count(*) = 1 
-   THEN 'creating extension postgis ' || (select default_version from pg_available_extensions where name = 'postgis') 
-                                      || ' if not already created'
-   ELSE 'MAYDAY: No postgis extension available in pg_available extensions'
-   END AS postgis_clue
-FROM pg_available_extensions
-where name = 'postgis';
-create extension if not exists postgis;
 -- tax_block_polygon: In the legacy system this is an SDE dataset, actively edited
 CREATE TABLE tax_block_polygon (
 	objectid serial primary key,
@@ -29,7 +20,7 @@ CREATE TABLE tax_block_polygon (
 	section_number NUMERIC(5,0) NOT NULL, 
 	volume_number NUMERIC(5,0) NOT NULL, 
 	globalid VARCHAR(38) NOT NULL, 
-    shape GEOMETRY(polygon, 2263)); 
+    shape GEOMETRY(multipolygon, 2263)); 
 CREATE INDEX tax_block_polygonshape on tax_block_polygon using GIST(shape);
 grant select on tax_block_polygon to dtmread;
 -- from legacy ETL
@@ -50,7 +41,7 @@ grant select on tax_block_point to dtmread;
 --    For tax_lot_point we explode mutipolygons into separate, non-unique bbl records
 CREATE TABLE tax_lot_polygon (
     objectid serial primary key, 
-    boro VARCHAR(1) NOT NULL,  --unsure why varchar
+    boro VARCHAR(1),  --unsure why varchar
     block NUMERIC(10,0) NOT NULL,
     lot NUMERIC(5,0) NOT NULL,
     bbl VARCHAR(10),                  
@@ -79,8 +70,8 @@ CREATE TABLE tax_lot_polygon (
 	effective_tax_year VARCHAR(50), 
 	bill_bbl_flag NUMERIC(5,0), 
 	globalid VARCHAR(38) NOT NULL,
-    shape GEOMETRY(geometry, 2263));  --yes, there are a few with multiple outer rings
-CREATE UNIQUE INDEX tax_lot_polygonbbl on tax_lot_polygon (bbl); 
+    shape GEOMETRY(multipolygon, 2263));  --yes, there are a few with multiple outer rings
+CREATE INDEX tax_lot_polygonbbl on tax_lot_polygon (bbl); 
 CREATE INDEX tax_lot_polygonshape on tax_lot_polygon using GIST(shape);
 grant select on tax_lot_polygon to dtmread;
 -- Source SDE TAX_LOT_POLYGON --> target Oracle SDO TAX_LOT_POINT, tiled
@@ -273,7 +264,7 @@ CREATE TABLE tax_lot_face (
 	bw_change NUMERIC(5,0), 
 	approx_length_flag NUMERIC(5,0) NOT NULL, 
 	globalid VARCHAR(38) NOT NULL, 
-	shape GEOMETRY (linestring,2263));
+	shape GEOMETRY (multilinestring,2263));
 CREATE INDEX tax_lot_facebbl on tax_lot_face (bbl); 
 CREATE INDEX tax_lot_faceshape on tax_lot_face using GIST(shape);
 grant select on tax_lot_face to dtmread;

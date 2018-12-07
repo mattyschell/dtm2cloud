@@ -1,48 +1,57 @@
 ## WIP Test Setup For This WIP Project
 
-This directory contains resources for test setup.  Our goal is to create "edited" source data in SDE and "unedited" data in PostgreSQL and then turn the ETL loose to restore order.
-
-### Hand-wavy outline: Create Known State Test Data in Postgis and Oracle SDE
-
-1. Create PostgreSQL Scratch Source 
-
-    Provisions a postgis database "dtm" on localhost with source (legacy SDE) schema and "edited" data.  These are scratch datasets.
-
-2. Create PostgreSQL Target
-
-   Creates the target DTM tables and some known state "unedited" test data.
-
-3. Reverse-engineer SDE Source
-
-   Uses the scratch postgis schema and "edited" data from step 1 to reverse-engineer a legacy Oracle SDE source.  
+This directory contains resources for test setup.  Our goal is to create known, 
+repeatable, "edited" source data in SDE and "unedited" data in PostreSQL and 
+then turn the ETL loose to restore order.  
 
 ### Expectations:
 
-1. A PostgreSQL database running on localhost with "postgres" superuser 
+1. A PostgreSQL instance with PostGIS on localhost with postgres superuser 
 2. Python 2.7 with arcpy (ArcGIS 10.2+)
 3. An sde connection file that points to an existing SDE geodatabase
 
 #### 1. Create PostgreSQL Test DB and Scratch SDE Source Data
 
-    Execute from the top-level project directory in MinGW 
+Create a PostGIS database "dtm" on localhost with users dtmwrite and dtmread. 
+Also create source (legacy SDE) schema and "edited" data.  These are scratch 
+datasets.
+
+Execute from the top-level project directory in MinGW 
                    
-   ./src/test/resources/postgres-source.sh                                                                
+```
+$ ./src/test/resources/postgres-source.sh
+```                                                                
 
-   or if your postgres superuser requires a password
+Any postgres superuser password and local config that isn't standard should 
+be externalized. For ex
 
-   ./src/test/resources/postgres-source.sh optionalpasswordhere
+```
+$ export PGPORT=5433
+$ export PGPASSWORD=BeMyDataBae!
+$ ./src/test/resources/postgres-source.sh
+```
 
-### 2. Create PostgreSQL Target Data            
+#### 2. Create PostgreSQL Target Data            
 
-    ./src/test/resources/postgres-target.sh  
+Create the target DTM tables and "unedited" test data.  Use the dtm database 
+and dtmwrite user we created in step 1.
 
-    NA superuser password. We leverage the dtmwrite user created in step 1.   
+```
+./src/test/resources/postgres-target.sh
+```
 
 #### 3. Reverse-engineer SDE Source
 
-   ./src/test/resources/sde-source.sh "C:\path\to\test_sde_schema@geocdev.sde"
+Use the scratch PostGIS "edited" data from step 1 to reverse-engineer a legacy 
+Oracle SDE source.  
+
+```
+./src/test/resources/sde-source.sh "C:\path\to\test_sde_schema@geocdev.sde"
+```
 
    ex
 
-   ./src/test/resources/sde-source.sh "c:\matt_projects\database_utils\arcgisconnections\dof_dtm@geocdev.sde"
+```
+./src/test/resources/sde-source.sh "C:\arcgisconnections\dof_dtm@geocdev.sde"
+```
    

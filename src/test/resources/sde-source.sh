@@ -2,7 +2,8 @@
 # download shps that will be the source schema and data for the test SDE database
 # Requres we are on a windows OS for arcpy unfortunately
 # This setup is the reverse of the ETL we are testing
-# mingw cant access T and .sde files shouldnt be in git so caller must pass a path to a .sde file
+# mingw cant access T and .sde files shouldnt be in git so caller must pass a 
+#   path to a .sde file
 # call from top level dtm2cloud like
 # ./src/test/resources/sde-source.sh "c:\matt_projects\database_utils\arcgisconnections\dof_dtm@geocdev.sde"
 sdeconn=$1
@@ -12,9 +13,13 @@ rm src/test/resources/tax_block_polygon.*
 rm src/test/resources/tax_lot_polygon.*
 rm src/test/resources/tax_lot_face.*
 # lovely test data load and shp creation from postgis
+OGPGPASSWORD=$PGPASSWORD
+export PGPASSWORD=PostgisIsMyDataBae!
 pgsql2shp -f "src/test/resources/tax_block_polygon" -h localhost -u dtmread dtm "tax_block_polygon_scratch"
 pgsql2shp -f "src/test/resources/tax_lot_polygon" -h localhost -u dtmread dtm "tax_lot_polygon_scratch"
 pgsql2shp -f "src/test/resources/tax_lot_face" -h localhost -u dtmread dtm "tax_lot_face_scratch"
+# reset users pwd if exists
+export PGPASSWORD=$OGPGPASSWORD
 # not so lovely load SDE dataset 
 python src/test/resources/sde-source.py $sdeconn
 # tidy up temp files
