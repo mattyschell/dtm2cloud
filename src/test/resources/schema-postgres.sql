@@ -27,7 +27,7 @@ grant select on tax_block_polygon_scratch to dtmread;
 -- tax_lot_polygon_sdo is not used in tiles, but is consumed by Geoserver (subject lots, I think)
 CREATE TABLE tax_lot_polygon_scratch (
     objectid serial primary key,
-    boro VARCHAR(1) NOT NULL,  --unsure why varchar
+    boro VARCHAR(1),  
     block NUMERIC(10,0) NOT NULL,
     lot NUMERIC(5,0) NOT NULL,
     bbl VARCHAR(10),                  -- perhaps this can be made unique

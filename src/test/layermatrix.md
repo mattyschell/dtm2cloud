@@ -84,7 +84,9 @@ The notes below were noted during October 2018 puzzling.  They tend to represent
 | | PostGIS tax_lot_point | 3 records to label each lot |
 | | PostGIS tax_lot_polygon |  3 separate lots (preventing unique key on bbl) |
 
-A list of puzzling candidates, likely all similar to the above.  These are legacy duplicate bbl tax_lot_point records (multiple labels) that correspond to unique tax_lot_polygon_sdo records where the tax_lot_polygon_sdo is a single outer ring.
+A list of puzzling candidates.  These are legacy duplicate bbl tax_lot_point records (multiple labels) that correspond to unique tax_lot_polygon_sdo records where the tax_lot_polygon_sdo is a single outer ring.  
+
+Roughly half of these are duplicates (or more) where the shapes are visible at scale.  The other half are slivers.  Then there is 5061560032 which is a completely duplicated and coincident lot.
 
 | BBL | 
 | ------------- |

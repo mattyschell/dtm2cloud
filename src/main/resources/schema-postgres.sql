@@ -248,7 +248,7 @@ grant select on possession_hooks to dtmread;
 CREATE TABLE tax_lot_face (
     objectid serial primary key,
 	tax_lot_face_type NUMERIC(5,0), 
-	boro VARCHAR(1) NOT NULL, 
+	boro VARCHAR(1), -- in production 137 records with a single space for boro
 	block NUMERIC(10,0) NOT NULL, 
 	lot NUMERIC(5,0) NOT NULL, 
 	bbl NUMERIC(10), 
