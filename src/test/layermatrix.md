@@ -123,6 +123,8 @@ Roughly half of these are duplicates (or more) where the shapes are visible at s
 
 A less puzzling but still exotic list. These are legacy duplicate bbl tax_lot_point records (multiple labels) that correspond to unique tax_lot_polygon_sdo records where the tax_lot_polygon_sdo is multiple outer rings.
 
+Some of these digits (0000, 9999, 8900) appear to indicate medians and other unruly blocks and lots. 
+
 | BBL |
 | ------------- |
 | 1000620001 |

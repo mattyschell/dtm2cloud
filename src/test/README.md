@@ -14,7 +14,8 @@ then turn the ETL loose to restore order.
 
 Create a PostGIS database "dtm" on localhost with users dtmwrite and dtmread. 
 Also create source (legacy SDE) schema and "edited" data.  These are scratch 
-datasets.
+datasets and the user credentials are hard coded in the script because this
+is for testing only.
 
 Execute from the top-level project directory in MinGW 
                    
