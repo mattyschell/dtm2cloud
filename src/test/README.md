@@ -44,7 +44,8 @@ and dtmwrite user we created in step 1.
 #### 3. Reverse-engineer SDE Source
 
 Use the scratch PostGIS "edited" data from step 1 to reverse-engineer a legacy 
-Oracle SDE source.  
+Oracle SDE source.  Includes a phony v_boro_block_changes table which indicates
+that all blocks in the test data were edited yesterday.
 
 ```
 ./src/test/resources/sde-source.sh "C:\path\to\test_sde_schema@geocdev.sde"

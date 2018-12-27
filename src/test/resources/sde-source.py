@@ -33,24 +33,37 @@ class SdeTestFc(object):
         self.sdetarget = os.path.join(self.sdepath,
                                       featureclassname)
 
-    def loadtarget(self):
+    def loadtarget(self,
+                   keyword=None,
+                   register='Y'):
 
         arcpy.Delete_management(self.sdetarget)
 
         # avoid objectid_1 column generation
         arcpy.DeleteField_management(self.shpsource,"OBJECTID")
 
-        arcpy.FeatureClassToFeatureClass_conversion(self.shpsource, 
-                                                    self.sdepath,
-                                                    self.name)
+        if keyword is None:
+
+            arcpy.FeatureClassToFeatureClass_conversion(self.shpsource, 
+                                                        self.sdepath,
+                                                        self.name)
+        
+        else:
+
+            arcpy.FeatureClassToFeatureClass_conversion(self.shpsource, 
+                                                        self.sdepath,
+                                                        self.name,
+                                                        config_keyword=keyword)
 
         self.field_remapping()
 
-        if self.featuredataset == "":
-            arcpy.RegisterAsVersioned_management(self.sdetarget)
-        else:
-            # first fc into an annoying feature dataset bucket sets the versioning
-            arcpy.RegisterAsVersioned_management(self.sdepath)
+        if register == 'Y':
+
+            if self.featuredataset == "":
+                arcpy.RegisterAsVersioned_management(self.sdetarget)
+            else:
+                # first fc into an annoying feature dataset bucket sets the versioning
+                arcpy.RegisterAsVersioned_management(self.sdepath)
 
     def field_remapping(self):
 
@@ -180,6 +193,26 @@ class TaxLotFace(SdeTestFc):
 
         self._field_remapping(oceanofshpcolumns)
 
+class VBoroBlockChanges(SdeTestFc):
+
+    def __init__(self,
+                 featureclassname,
+                 sdetarget,
+                 shpsource):
+        
+        SdeTestFc.__init__(self,
+                           featureclassname,
+                           sdetarget,
+                           shpsource,
+                           None)
+
+    def field_remapping(self):
+
+        oceanofshpcolumns = {}
+
+        oceanofshpcolumns = {'change_dat': {'colname': 'change_date', 'coltype' : 'DATE'}}
+
+        self._field_remapping(oceanofshpcolumns)
 
 if __name__ == "__main__":
 
@@ -198,6 +231,10 @@ if __name__ == "__main__":
     print "attempting to delete " + str(os.path.join(sdefile,'Cadastral'))
     arcpy.Delete_management(os.path.join(sdefile
                                         ,'Cadastral'))
+
+    print "attempting to delete " + str(os.path.join(sdefile,'V_BORO_BLOCK_CHANGES'))
+    arcpy.Delete_management(os.path.join(sdefile
+                                        ,'V_BORO_BLOCK_CHANGES'))
 
     print "Creating Cadastral feature dataset in {0}".format(sdefile)
     arcpy.CreateFeatureDataset_management(sdefile
@@ -234,5 +271,15 @@ if __name__ == "__main__":
 
     tax_lot_face.loadtarget()
 
-    print "loaded and registered as versioned {0} in {1}".format("Tax_Lot_Face"
-                                                                ,sdefile)
+    # V_BORO_BLOCK_CHANGES
+    # not actually an ESRI fc in real DTM. It's a view
+    # this is a shortcut to help testing
+    v_boro_block_changes = VBoroBlockChanges('V_BORO_BLOCK_CHANGES'
+                                            ,sdefile
+                                            ,os.path.join(cwd, "v_boro_block_changes.shp"))
+
+    v_boro_block_changes.loadtarget('SDO_GEOMETRY',
+                                    'N')
+
+    print "loaded {0} in {1}".format("V_BORO_BLOCK_CHANGES"
+                                     ,sdefile)
