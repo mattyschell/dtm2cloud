@@ -39,7 +39,7 @@ These don't participate in the legacy ETL but should be part of our dtm2cloud pr
 |                 | Sub_Label | No spatial data, adds labels to TAX_LOT_POINT |
 
 
-## 3. DOF Reference layers and other tracking stuff 
+### 3. DOF Reference layers and other tracking stuff 
 
 These are mostly DAB_% tables supporting the Digital Alteration Book and related views like V_BORO_BLOCK_CHANGES that summarize editing work.
 
@@ -55,7 +55,7 @@ Skipping for now
 
 | Table Name | Notes |
 | ------------- | ------------- | 
-| TAX_BLOCK | This is a subset (87%) of all tax_block_polygon records with some formatted columns.  Tax block labels come from tax_block_point, so this one is a bit of a mystery. Could get pushed to category #6 if it's not careful. |
+| TAX_BLOCK | This is a subset (87%) of all tax_block_polygon records with some formatted columns and geometry as sdo_geometry. It feeds into the v_boro_block_changes view that drives the legacy ETL. |
 
 
 
