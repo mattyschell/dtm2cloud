@@ -350,3 +350,17 @@ SELECT  l.bbl
    LEFT JOIN condo_label c ON l.bbl = c.bbl
    LEFT JOIN sub_label s ON l.bbl = s.bbl;
 grant select on v_tax_lot_point to dtmread;
+-- slightly modified version of source dab_wizard_transaction
+-- DAB = Digital Alteration Book you jokers
+-- In the past the AB was a big leather-bound book or something. I envision quill pens
+CREATE TABLE dab_wizard_transaction (
+	 trans_num integer primary key
+	,wizard_name varchar(50)
+	,auth_for_change varchar(255)
+	,change_date timestamp
+	,prod_flag varchar(1)
+	,bbl varchar(10)
+	,action varchar(10)
+	,prod_date timestamp
+);
+grant select on dab_wizard_transaction to dtmread;
