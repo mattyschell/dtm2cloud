@@ -16,15 +16,16 @@ rm src/test/resources/v_boro_block_changes.*
 # lovely test data load and shp creation from postgis
 OGPGPASSWORD=$PGPASSWORD
 export PGPASSWORD=PostgisIsMyDataBae!
-pgsql2shp -f "src/test/resources/tax_block_polygon" -h localhost -u dtmread dtm "tax_block_polygon_scratch"
-pgsql2shp -f "src/test/resources/tax_lot_polygon" -h localhost -u dtmread dtm "tax_lot_polygon_scratch"
-pgsql2shp -f "src/test/resources/tax_lot_face" -h localhost -u dtmread dtm "tax_lot_face_scratch"
-pgsql2shp -f "src/test/resources/v_boro_block_changes" -h localhost -u dtmread dtm "v_boro_block_changes_scratch"
+pgsql2shp -f "src/test/resources/tax_block_polygon" -h localhost -u dtmwrite dtm "tax_block_polygon_scratch"
+pgsql2shp -f "src/test/resources/tax_lot_polygon" -h localhost -u dtmwrite dtm "tax_lot_polygon_scratch"
+pgsql2shp -f "src/test/resources/tax_lot_face" -h localhost -u dtmwrite dtm "tax_lot_face_scratch"
+pgsql2shp -f "src/test/resources/v_boro_block_changes" -h localhost -u dtmwrite dtm "v_boro_block_changes_scratch"
 # reset users pwd if exists
 export PGPASSWORD=$OGPGPASSWORD
 # not so lovely load SDE dataset 
+# includes some that aren't SDE-registered
 python src/test/resources/sde-source.py $sdeconn
-# tidy up temp files
+# tidy up temp shapefiles
 rm src/test/resources/tax_block_polygon.*
 rm src/test/resources/tax_lot_polygon.*
 rm src/test/resources/tax_lot_face.*

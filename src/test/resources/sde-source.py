@@ -3,6 +3,7 @@ import sys
 import os
 print "starting {0} by importing arcpy".format(sys.argv[0])
 import arcpy
+import fcmutils
 
 
 class SdeTestFc(object):
@@ -228,6 +229,7 @@ if __name__ == "__main__":
     sdefile = os.path.normpath(sys.argv[1])
     cwd = os.path.dirname(os.path.realpath(__file__))
 
+
     print "attempting to delete " + str(os.path.join(sdefile,'Cadastral'))
     arcpy.Delete_management(os.path.join(sdefile
                                         ,'Cadastral'))
@@ -283,3 +285,17 @@ if __name__ == "__main__":
 
     print "loaded {0} in {1}".format("V_BORO_BLOCK_CHANGES"
                                      ,sdefile)
+
+    # Labeling tables, not registered, not from shapefiles. w00t
+    sqlfile = os.path.join(cwd, "schema-oracle.sql")
+
+    # compile (oops) is best for anonymous pl/sql block
+    sdereturn = fcmutils.compilesqlfile(sdefile
+                                       ,sqlfile)
+
+    if sdereturn:
+        print "created {0} in {1}".format("CONDO_UNITS,AIR_LABEL,CONDO_LABEL,SUB_LABEL"
+                                          ,sdefile)
+    else:
+        print "error creating {0} in {1}".format("CONDO_UNITS,AIR_LABEL,CONDO_LABEL,SUB_LABEL"
+                                                 ,sdefile)

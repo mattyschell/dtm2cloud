@@ -7,3 +7,6 @@
 *.dbf
 *.shx
 *.dbf
+
+#python
+*.pyc

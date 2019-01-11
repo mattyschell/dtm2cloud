@@ -19,7 +19,6 @@ CREATE TABLE tax_block_polygon_scratch (
 	,globalid VARCHAR(38) NOT NULL 
     ,shape GEOMETRY(multipolygon, 2263)); 
 CREATE INDEX tax_block_polygon_scratchshape on tax_block_polygon_scratch using GIST(shape);
-grant select on tax_block_polygon_scratch to dtmread;
 -- as defined in legacy ETL:
 -- Source SDE tax_lot_polygon --> target Oracle SDO tax_lot_polygon_sdo
 --                            --> target Oracle SDO tax_lot_point
@@ -58,7 +57,6 @@ CREATE TABLE tax_lot_polygon_scratch (
 	,globalid VARCHAR(38) NOT NULL
     ,shape GEOMETRY(multipolygon, 2263));  --yes, there are a few with multiple outer rings
 CREATE INDEX tax_lot_polygon_scratchshape on tax_lot_polygon_scratch using GIST(shape);
-grant select on tax_lot_polygon_scratch to dtmread;
 -- as defined in legacy ETL:
 -- Source SDE tax_lot_face --> consumed directly by Geowebcache
 --                         --> target Oracle SDO lot_face_point
@@ -84,8 +82,6 @@ CREATE TABLE tax_lot_face_scratch (
 	,globalid VARCHAR(38) NOT NULL
     ,shape GEOMETRY(multilinestring, 2263));  
 CREATE INDEX tax_lot_face_scratchshape on tax_lot_face_scratch using GIST(shape);
-grant select on tax_lot_face_scratch to dtmread;
---
 -- Next section: phony setup for test drives
 -- In reality v_boro_block_changes is a view to various Digital Alteration Book
 --  (DAB) tracking tables.  But we will create a real table and put fake 
