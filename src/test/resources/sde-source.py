@@ -229,7 +229,6 @@ if __name__ == "__main__":
     sdefile = os.path.normpath(sys.argv[1])
     cwd = os.path.dirname(os.path.realpath(__file__))
 
-
     print "attempting to delete " + str(os.path.join(sdefile,'Cadastral'))
     arcpy.Delete_management(os.path.join(sdefile
                                         ,'Cadastral'))
@@ -299,3 +298,17 @@ if __name__ == "__main__":
     else:
         print "error creating {0} in {1}".format("CONDO_UNITS,AIR_LABEL,CONDO_LABEL,SUB_LABEL"
                                                  ,sdefile)
+
+    sqlfile = os.path.join(cwd, "data-oracle.sql")
+
+    sdereturn = fcmutils.compilesqlfile(sdefile
+                                       ,sqlfile)
+
+    if sdereturn:
+        print "populated {0} in {1}".format("CONDO_UNITS,AIR_LABEL,CONDO_LABEL,SUB_LABEL"
+                                           ,sdefile)
+    else:
+        print "error populating {0} in {1}".format("CONDO_UNITS,AIR_LABEL,CONDO_LABEL,SUB_LABEL"
+                                                  ,sdefile)
+
+                                                
